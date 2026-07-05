@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Windows 12</title>
+<style>
+  :root{
+    --bg-deep:#0a0c16;
+    --mica: rgba(255,255,255,0.07);
+    --mica-strong: rgba(255,255,255,0.12);
+    --mica-solid: rgba(24,24,34,0.72);
+    --border: rgba(255,255,255,0.14);
+    --text:#f3f4f9;
+    --text-dim:#a7abbb;
+    --accent-1:#7c5cff;
+    --accent-2:#22d3c5;
+    --accent-grad: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+    --radius:16px;
+    --radius-sm:9px;
+    --font-ui:"Segoe UI Variable","Segoe UI",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+    --font-mono:"Cascadia Code","Consolas","SFMono-Regular",monospace;
+  }
+  body.light{
+    --bg-deep:#dfe3ee;
+    --mica: rgba(255,255,255,0.55);
+    --mica-strong: rgba(255,255,255,0.75);
+    --mica-solid: rgba(255,255,255,0.82);
+    --border: rgba(20,20,30,0.10);
+    --text:#15161f;
+    --text-dim:#5b5f70;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; width:100%; height:100%; overflow:hidden;
+    font-family:var(--font-ui); color:var(--text); user-select:none;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- Wallpaper ---------- */
+  #wallpaper{
+    position:fixed; inset:0; z-index:0;
+    background:
+      radial-gradient(1200px 800px at 15% 20%, rgba(124,92,255,0.55), transparent 60%),
+      radial-gradient(1000px 700px at 85% 75%, rgba(34,211,197,0.45), transparent 60%),
+      radial-gradient(900px 900px at 50% 100%, rgba(255,90,160,0.28), transparent 55%),
+      linear-gradient(160deg, #0a0c16 0%, #120a25 45%, #071a1c 100%);
+    background-size:180% 180%, 180% 180%, 160% 160%, 100% 100%;
+    animation: drift 28s ease-in-out infinite alternate;
+  }
+  body.light #wallpaper{
+    background:
+      radial-gradient(1200px 800px at 15% 20%, rgba(124,92,255,0.35), transparent 60%),
+      radial-gradient(1000px 700px at 85% 75%, rgba(34,211,197,0.30), transparent 60%),
+      radial-gradient(900px 900px at 50% 100%, rgba(255,150,190,0.30), transparent 55%),
+      linear-gradient(160deg, #eef0f8 0%, #e4e8f5 45%, #e3f3f0 100%);
+  }
+  @keyframes drift{
+    0%{background-position:0% 0%, 100% 100%, 50% 100%, 0 0;}
+    100%{background-position:20% 15%, 80% 85%, 55% 90%, 0 0;}
+  }
+  #grain{position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.035;
+    background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/></filter><rect width="100%25" height="100%25" filter="url(%23n)"/></svg>');
+  }
+
+  /* ---------- Desktop ---------- */
+  #desktop{position:fixed; inset:0; z-index:2; padding:20px;}
+  .icon{
+    width:92px; display:flex; flex-direction:column; align-items:center; gap:6px;
+    padding:10px 4px; border-radius:var(--radius-sm); cursor:pointer;
+    position:absolute; text-align:center;
+  }
+  .icon:hover, .icon.selected{background:var(--mica);}
+  .icon.snap-anim{transition:left .12s ease, top .12s ease;}
+  .icon .glyph{
+    width:44px; height:44px; border-radius:11px; display:flex; align-items:center; justify-content:center;
+    font-size:22px; background:var(--mica-strong); border:1px solid var(--border);
+    backdrop-filter:blur(14px);
+  }
+  .icon .label{font-size:12.5px; color:var(--text); text-shadow:0 1px 3px rgba(0,0,0,.5); line-height:1.25;}
+
+  /* ---------- Windows ---------- */
+  .win{
+    position:absolute; min-width:340px; min-height:220px;
+    background:var(--mica-solid); backdrop-filter:blur(28px) saturate(150%);
+    border:1px solid var(--border); border-radius:var(--radius);
+    box-shadow:0 20px 60px rgba(0,0,0,.45), 0 2px 0 rgba(255,255,255,.04) inset;
+    display:flex; flex-direction:column; overflow:hidden;
+    animation:winOpen .18s cubic-bezier(.2,.8,.3,1);
+  }
+  @keyframes winOpen{ from{opacity:0; transform:scale(.96);} to{opacity:1; transform:scale(1);} }
+  .win.maximized{ border-radius:0; }
+  .titlebar{
+    height:38px; display:flex; align-items:center; gap:8px; padding:0 6px 0 12px;
+    background:var(--mica); border-bottom:1px solid var(--border); cursor:default;
+    flex-shrink:0;
+  }
+  .titlebar .ttl-icon{font-size:14px;}
+  .titlebar .ttl-text{font-size:12.5px; color:var(--text-dim); flex:1;}
+  .winbtn{
+    width:30px; height:26px; border:none; background:transparent; color:var(--text-dim);
+    border-radius:6px; font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .winbtn:hover{background:var(--mica-strong); color:var(--text);}
+  .winbtn.close:hover{background:#e81123; color:white;}
+  .win-body{flex:1; overflow:auto; position:relative;}
+  .resize-handle{position:absolute; right:2px; bottom:2px; width:14px; height:14px; cursor:nwse-resize;}
+
+  /* ---------- Taskbar ---------- */
+  #taskbar{
+    position:fixed; left:50%; bottom:10px; transform:translateX(-50%); z-index:50;
+    display:flex; align-items:center; gap:4px; padding:6px 10px;
+    background:var(--mica-solid); backdrop-filter:blur(26px) saturate(160%);
+    border:1px solid var(--border); border-radius:16px;
+    box-shadow:0 12px 30px rgba(0,0,0,.35);
+  }
+  .tb-btn{
+    width:42px; height:42px; border-radius:10px; border:none; background:transparent;
+    display:flex; align-items:center; justify-content:center; font-size:18px; cursor:pointer; color:var(--text);
+    position:relative;
+  }
+  .tb-btn:hover{background:var(--mica-strong);}
+  .tb-btn.active::after{
+    content:""; position:absolute; bottom:2px; left:50%; transform:translateX(-50%);
+    width:5px; height:5px; border-radius:50%; background:var(--accent-2);
+  }
+  #tb-start{background:var(--accent-grad); color:white; font-weight:700;}
+  #tb-search{
+    display:flex; align-items:center; gap:8px; height:42px; padding:0 14px; border-radius:12px;
+    background:var(--mica); color:var(--text-dim); font-size:13px; min-width:200px; cursor:text;
+  }
+  #tb-search:hover{background:var(--mica-strong);}
+  .tb-sep{width:1px; height:26px; background:var(--border); margin:0 4px;}
+  #tb-pinned{display:flex; gap:2px;}
+  #tb-running{display:flex; gap:2px;}
+  #tb-tray{
+    display:flex; align-items:center; gap:10px; padding:0 12px; height:42px; border-radius:12px; cursor:pointer;
+  }
+  #tb-tray:hover{background:var(--mica-strong);}
+  #tb-clock{display:flex; flex-direction:column; align-items:flex-end; padding:2px 10px; border-radius:10px; cursor:pointer; line-height:1.2;}
+  #tb-clock:hover{background:var(--mica-strong);}
+  #tb-clock .time{font-size:12.5px;}
+  #tb-clock .date{font-size:11px; color:var(--text-dim);}
+
+  /* ---------- Start menu ---------- */
+  #start-menu{
+    position:fixed; left:50%; bottom:70px; transform:translateX(-50%) translateY(12px);
+    width:560px; max-height:640px; z-index:60; opacity:0; pointer-events:none;
+    background:var(--mica-solid); backdrop-filter:blur(30px) saturate(160%);
+    border:1px solid var(--border); border-radius:var(--radius);
+    box-shadow:0 24px 70px rgba(0,0,0,.5); padding:22px 22px 16px;
+    transition:opacity .16s ease, transform .16s ease;
+  }
+  #start-menu.open{opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(0);}
+  .sm-search{
+    display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:10px;
+    background:var(--mica); border:1px solid var(--border); color:var(--text-dim); font-size:13px; margin-bottom:18px;
+  }
+  .sm-heading{font-size:13px; color:var(--text-dim); margin:6px 0 10px; display:flex; justify-content:space-between;}
+  .sm-grid{display:grid; grid-template-columns:repeat(6,1fr); gap:6px; margin-bottom:16px;}
+  .sm-app{
+    display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 4px; border-radius:10px; cursor:pointer;
+  }
+  .sm-app:hover{background:var(--mica-strong);}
+  .sm-app .glyph{width:34px; height:34px; border-radius:9px; background:var(--mica-strong); display:flex; align-items:center; justify-content:center; font-size:17px;}
+  .sm-app .label{font-size:11px; color:var(--text); text-align:center;}
+  .sm-footer{
+    display:flex; align-items:center; justify-content:space-between; padding-top:12px; border-top:1px solid var(--border);
+  }
+  .sm-user{display:flex; align-items:center; gap:10px; font-size:13px;}
+  .sm-avatar{width:30px; height:30px; border-radius:50%; background:var(--accent-grad);}
+
+  /* ---------- Action / Quick settings center ---------- */
+  #action-center{
+    position:fixed; right:10px; bottom:70px; width:360px; z-index:60; opacity:0; pointer-events:none;
+    background:var(--mica-solid); backdrop-filter:blur(30px) saturate(160%);
+    border:1px solid var(--border); border-radius:var(--radius); padding:18px;
+    box-shadow:0 24px 70px rgba(0,0,0,.5);
+    transform:translateY(12px); transition:opacity .16s ease, transform .16s ease;
+  }
+  #action-center.open{opacity:1; pointer-events:auto; transform:translateY(0);}
+  .qs-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px;}
+  .qs-tile{
+    display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px;
+    background:var(--mica); cursor:pointer; font-size:12.5px; border:1px solid transparent;
+  }
+  .qs-tile.on{background:var(--accent-grad); color:white;}
+  .qs-tile:hover{border-color:var(--border);}
+  .qs-slider-row{display:flex; align-items:center; gap:10px; margin-bottom:10px; font-size:15px;}
+  .qs-slider-row input[type=range]{flex:1; accent-color:var(--accent-1);}
+
+  /* ---------- Context menu ---------- */
+  #ctx-menu{
+    position:fixed; z-index:80; min-width:200px; display:none;
+    background:var(--mica-solid); backdrop-filter:blur(26px); border:1px solid var(--border);
+    border-radius:10px; padding:6px; box-shadow:0 16px 40px rgba(0,0,0,.4);
+  }
+  #ctx-menu .ctx-item{padding:8px 12px; border-radius:6px; font-size:12.5px; cursor:pointer;}
+  #ctx-menu .ctx-item:hover{background:var(--mica-strong);}
+  #ctx-menu hr{border:none; border-top:1px solid var(--border); margin:4px 2px;}
+
+  /* ---------- Toasts ---------- */
+  #toast-wrap{position:fixed; top:16px; right:16px; z-index:90; display:flex; flex-direction:column; gap:8px;}
+  .toast{
+    background:var(--mica-solid); backdrop-filter:blur(20px); border:1px solid var(--border);
+    border-radius:10px; padding:12px 16px; font-size:12.5px; min-width:220px;
+    box-shadow:0 10px 30px rgba(0,0,0,.35); animation:toastIn .18s ease;
+    border-left:3px solid var(--accent-2);
+  }
+  @keyframes toastIn{ from{opacity:0; transform:translateX(20px);} to{opacity:1; transform:translateX(0);} }
+
+  /* ---------- Lock screen ---------- */
+  #lock{
+    position:fixed; inset:0; z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    color:white; cursor:pointer;
+    background:
+      radial-gradient(1200px 800px at 20% 20%, rgba(124,92,255,.5), transparent 60%),
+      radial-gradient(1000px 700px at 80% 80%, rgba(34,211,197,.4), transparent 60%),
+      linear-gradient(160deg,#0a0c16,#150a2a);
+  }
+  #lock .lk-time{font-size:96px; font-weight:200; letter-spacing:-2px;}
+  #lock .lk-date{font-size:22px; color:#c9ccdb; margin-top:6px;}
+  #lock .lk-hint{position:absolute; bottom:60px; font-size:13px; color:#c9ccdb; animation:pulse 2s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:.5;} 50%{opacity:1;}}
+
+  /* ---------- App content generic ---------- */
+  .app-pad{padding:16px;}
+  textarea.np{
+    width:100%; height:100%; resize:none; border:none; outline:none; background:transparent;
+    color:var(--text); font-family:var(--font-mono); font-size:13.5px; padding:14px; line-height:1.5;
+  }
+  .calc{display:flex; flex-direction:column; height:100%; padding:12px; gap:10px;}
+  .calc-display{
+    background:var(--mica); border-radius:10px; padding:16px; text-align:right; font-size:30px; font-family:var(--font-mono);
+  }
+  .calc-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; flex:1;}
+  .calc-btn{
+    border:none; border-radius:10px; background:var(--mica); color:var(--text); font-size:16px; cursor:pointer;
+  }
+  .calc-btn:hover{background:var(--mica-strong);}
+  .calc-btn.op{background:var(--accent-grad); color:white;}
+  .fe-wrap{display:flex; height:100%;}
+  .fe-side{width:150px; border-right:1px solid var(--border); padding:12px 8px; font-size:12.5px; color:var(--text-dim); flex-shrink:0;}
+  .fe-side .fe-item{padding:8px 10px; border-radius:8px; cursor:pointer; display:flex; gap:8px; align-items:center;}
+  .fe-side .fe-item:hover, .fe-side .fe-item.active{background:var(--mica-strong); color:var(--text);}
+  .fe-main{flex:1; padding:16px; display:grid; grid-template-columns:repeat(auto-fill,minmax(84px,1fr)); gap:14px; align-content:start;}
+  .fe-file{display:flex; flex-direction:column; align-items:center; gap:6px; padding:8px; border-radius:8px; cursor:pointer; font-size:11.5px; text-align:center;}
+  .fe-file:hover{background:var(--mica-strong);}
+  .fe-file .glyph{font-size:26px;}
+  .settings-wrap{padding:20px; display:flex; flex-direction:column; gap:20px;}
+  .settings-row{display:flex; align-items:center; justify-content:space-between; padding:14px 16px; background:var(--mica); border-radius:10px;}
+  .settings-section-title{font-size:11.5px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.06em; margin:6px 2px -6px;}
+  .swatch{width:26px; height:26px; border-radius:50%; cursor:pointer; border:2px solid transparent;}
+  .swatch.active{border-color:var(--text);}
+  .toggle{width:42px; height:24px; border-radius:12px; background:var(--mica-strong); position:relative; cursor:pointer;}
+  .toggle.on{background:var(--accent-grad);}
+  .toggle::after{content:""; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:white; transition:left .15s ease;}
+  .toggle.on::after{left:21px;}
+  .browser-bar{display:flex; gap:8px; padding:10px; border-bottom:1px solid var(--border); align-items:center;}
+  .browser-bar input{flex:1; background:var(--mica); border:1px solid var(--border); border-radius:20px; padding:8px 14px; color:var(--text); font-size:12.5px; outline:none;}
+  .widget-card{background:var(--mica); border-radius:14px; padding:16px; margin:14px;}
+
+  /* ---------- Modal dialog ---------- */
+  #modal-overlay{
+    position:fixed; inset:0; z-index:95; display:none; align-items:center; justify-content:center;
+    background:rgba(0,0,0,.4);
+  }
+  #modal-box{
+    width:320px; background:var(--mica-solid); backdrop-filter:blur(24px) saturate(160%);
+    border:1px solid var(--border); border-radius:14px; padding:20px;
+    box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  #modal-title{font-size:13.5px; margin-bottom:12px; color:var(--text);}
+  #modal-input{
+    width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border);
+    background:var(--mica); color:var(--text); font-size:13px; outline:none; box-sizing:border-box;
+    font-family:var(--font-ui);
+  }
+  #modal-actions{display:flex; justify-content:flex-end; gap:8px; margin-top:16px;}
+</style>
+</head>
+<body>
+
+  <div id="wallpaper"></div>
+  <div id="grain"></div>
+
+  <!-- LOCK SCREEN -->
+  <div id="lock">
+    <div class="lk-time" id="lk-time">--:--</div>
+    <div class="lk-date" id="lk-date">Loading…</div>
+    <div id="lk-pin-wrap" style="display:none; margin-top:22px; flex-direction:column; align-items:center; gap:8px;">
+      <input id="lk-pin-input" type="password" inputmode="numeric" placeholder="Enter PIN"
+             style="width:200px; text-align:center; letter-spacing:.3em; padding:10px 14px; border-radius:10px;
+                    border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08); color:#fff; font-size:16px; outline:none;">
+      <div id="lk-pin-error" style="color:#ff6b6b; font-size:12px; height:16px;"></div>
+    </div>
+    <div class="lk-hint" id="lk-hint">Click anywhere to unlock</div>
+  </div>
+
+  <div id="desktop"></div>
+
+  <div id="taskbar">
+    <button class="tb-btn" id="tb-start" title="Start">⊞</button>
+    <div id="tb-search"><span>🔍</span><span>Search</span></div>
+    <div class="tb-sep"></div>
+    <div id="tb-pinned"></div>
+    <div id="tb-running"></div>
+    <div style="flex:1"></div>
+    <div id="tb-tray">
+      <span id="tray-wifi">📶</span><span id="tray-vol">🔊</span><span id="tray-batt">🔋</span>
+    </div>
+    <div id="tb-clock">
+      <div class="time" id="clock-time">--:--</div>
+      <div class="date" id="clock-date">--</div>
+    </div>
+  </div>
+
+  <!-- START MENU -->
+  <div id="start-menu">
+    <div class="sm-search" style="padding:0; display:flex; align-items:center;">
+      <span style="padding-left:14px;">🔍</span>
+      <input id="sm-search-input" placeholder="Type to search apps, files and settings" autocomplete="off"
+             style="flex:1; background:transparent; border:none; outline:none; color:var(--text); font-size:13px; padding:10px 14px; font-family:var(--font-ui);">
+    </div>
+    <div id="sm-results" style="display:none; max-height:420px; overflow:auto; margin-bottom:8px;"></div>
+    <div id="sm-browse">
+      <div class="sm-heading"><span>Pinned</span><span>All apps ›</span></div>
+      <div class="sm-grid" id="sm-pinned"></div>
+      <div class="sm-heading"><span>Recommended</span></div>
+      <div class="sm-grid" id="sm-recommended"></div>
+    </div>
+    <div class="sm-footer">
+      <div class="sm-user"><div class="sm-avatar"></div>Fadan</div>
+      <button class="winbtn" onclick="lockScreen()" title="Lock">⏻</button>
+    </div>
+  </div>
+
+  <!-- ACTION CENTER -->
+  <div id="action-center">
+    <div class="qs-grid" id="qs-grid"></div>
+    <div class="qs-slider-row">🔆<input type="range" id="brightness-slider" min="0" max="100" value="70"></div>
+    <div class="qs-slider-row">🔊<input type="range" id="volume-slider" min="0" max="100" value="55"></div>
+    <div style="font-size:11.5px; color:var(--text-dim); text-align:center; margin-top:6px;">92% battery — plugged in</div>
+  </div>
+
+  <div id="ctx-menu"></div>
+  <div id="toast-wrap"></div>
+
+  <div id="modal-overlay">
+    <div id="modal-box">
+      <div id="modal-title"></div>
+      <input id="modal-input" autocomplete="off">
+      <div id="modal-actions">
+        <button class="winbtn" id="modal-cancel" style="width:auto; padding:6px 14px;">Cancel</button>
+        <button class="winbtn" id="modal-ok" style="width:auto; padding:6px 14px; background:var(--accent-grad); color:white;">OK</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ============ Persistent storage layer ============ */
+// Tries real localStorage first (works when this file is opened directly in a
+// browser). Falls back to an in-memory store if localStorage is blocked, e.g.
+// inside a sandboxed preview — so the OS still works, it just won't remember
+// things across a reload in that case.
+const Store = (function(){
+  let mem = {};
+  let useLocal = true;
+  try{
+    const testKey = "__w12_test__";
+    localStorage.setItem(testKey, "1");
+    localStorage.removeItem(testKey);
+  } catch(e){
+    useLocal = false;
+  }
+  return {
+    get(key, fallback){
+      try{
+        if(useLocal){
+          const v = localStorage.getItem(key);
+          return v===null ? fallback : JSON.parse(v);
+        }
+        return (key in mem) ? mem[key] : fallback;
+      } catch(e){ return fallback; }
+    },
+    set(key, value){
+      try{
+        if(useLocal){ localStorage.setItem(key, JSON.stringify(value)); }
+        else { mem[key] = value; }
+      } catch(e){
+        useLocal = false;
+        mem[key] = value;
+      }
+    },
+    remove(key){
+      try{
+        if(useLocal){ localStorage.removeItem(key); }
+        else { delete mem[key]; }
+      } catch(e){ delete mem[key]; }
+    },
+    usingLocal(){ return useLocal; }
+  };
+})();
+
+/* ============ CONFIG: apps ============ */
+const APPS = {
+  explorer:  { name:"File Explorer", icon:"📁", pinned:true },
+  notepad:   { name:"Notepad",       icon:"📝", pinned:true },
+  calc:      { name:"Calculator",    icon:"🧮", pinned:true },
+  browser:   { name:"Edge Aurora",   icon:"🌐", pinned:true },
+  settings:  { name:"Settings",      icon:"⚙️", pinned:true },
+  widgets:   { name:"Widgets",       icon:"✨", pinned:false },
+  bin:       { name:"Recycle Bin",   icon:"🗑️", pinned:false },
+  photos:    { name:"Photos",        icon:"🖼️", pinned:false },
+};
+
+const DESKTOP_ICONS = ["explorer","browser","notepad","calc","settings","bin"];
+
+/* ============ Virtual file system (nested folders + custom/web apps) ============ */
+const DEFAULT_APP_TEMPLATE = `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body{font-family:sans-serif; background:#12131c; color:#eee; display:flex;
+       align-items:center; justify-content:center; height:100vh; margin:0;}
+  button{padding:10px 18px; border:none; border-radius:8px;
+         background:linear-gradient(135deg,#7c5cff,#22d3c5); color:#fff; font-size:14px; cursor:pointer;}
+</style>
+</head>
+<body>
+  <div style="text-align:center;">
+    <h2>My App</h2>
+    <!-- alert/confirm/prompt are custom-styled in this OS instead of the browser's
+         native gray boxes. alert() still fires immediately, but confirm() and
+         prompt() now return a Promise, so use them with async/await: -->
+    <button id="btn">Click me</button>
+  </div>
+  <script>
+    document.getElementById('btn').addEventListener('click', async () => {
+      alert('Hello from my custom app!');
+      const ok = await confirm('Want to try prompt() too?');
+      if(ok){
+        const name = await prompt('What is your name?', 'Fadan');
+        if(name) alert('Nice to meet you, ' + name + '!');
+      }
+    });
+  <\/script>
+</body>
+</html>
+`;
+
+// Custom-styled alert/confirm/prompt injected into every app so they match the
+// OS look instead of the browser's native dialogs. Because a sandboxed iframe
+// can't truly pause script execution, confirm()/prompt() are turned into
+// Promises here — apps should call them with `await` inside an async function.
+const DIALOG_SHIM = `
+<style>
+  .__w12dlg-overlay{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;
+    background:rgba(10,10,20,.45);backdrop-filter:blur(6px);font-family:-apple-system,"Segoe UI",sans-serif;}
+  .__w12dlg-box{width:320px;max-width:90vw;background:rgba(28,28,40,.92);border:1px solid rgba(255,255,255,.14);
+    border-radius:14px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.5);color:#f2f2f7;}
+  .__w12dlg-msg{font-size:13.5px;line-height:1.5;margin-bottom:16px;white-space:pre-wrap;}
+  .__w12dlg-input{width:100%;box-sizing:border-box;padding:9px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.16);
+    background:rgba(255,255,255,.08);color:#fff;font-size:13px;outline:none;margin-bottom:16px;font-family:inherit;}
+  .__w12dlg-actions{display:flex;justify-content:flex-end;gap:8px;}
+  .__w12dlg-btn{border:none;border-radius:8px;padding:7px 16px;font-size:12.5px;cursor:pointer;background:rgba(255,255,255,.1);color:#fff;}
+  .__w12dlg-btn.__w12dlg-primary{background:linear-gradient(135deg,#7c5cff,#22d3c5);}
+</style>
+<script>
+(function(){
+  function buildOverlay(message, opts){
+    const overlay = document.createElement("div");
+    overlay.className = "__w12dlg-overlay";
+    const box = document.createElement("div");
+    box.className = "__w12dlg-box";
+    const msg = document.createElement("div");
+    msg.className = "__w12dlg-msg";
+    msg.textContent = message;
+    box.appendChild(msg);
+    let input = null;
+    if(opts.showInput){
+      input = document.createElement("input");
+      input.className = "__w12dlg-input";
+      input.value = opts.defaultValue || "";
+      box.appendChild(input);
+    }
+    const actions = document.createElement("div");
+    actions.className = "__w12dlg-actions";
+    box.appendChild(actions);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    if(input){ setTimeout(function(){ input.focus(); input.select(); }, 20); }
+    return {overlay:overlay, actions:actions, input:input};
+  }
+  window.alert = function(message){
+    const built = buildOverlay(String(message), {});
+    const ok = document.createElement("button");
+    ok.className = "__w12dlg-btn __w12dlg-primary";
+    ok.textContent = "OK";
+    ok.onclick = function(){ built.overlay.remove(); };
+    built.actions.appendChild(ok);
+    ok.focus();
+  };
+  window.confirm = function(message){
+    return new Promise(function(resolve){
+      const built = buildOverlay(String(message), {});
+      const cancel = document.createElement("button");
+      cancel.className = "__w12dlg-btn";
+      cancel.textContent = "Cancel";
+      cancel.onclick = function(){ built.overlay.remove(); resolve(false); };
+      const ok = document.createElement("button");
+      ok.className = "__w12dlg-btn __w12dlg-primary";
+      ok.textContent = "OK";
+      ok.onclick = function(){ built.overlay.remove(); resolve(true); };
+      built.actions.appendChild(cancel);
+      built.actions.appendChild(ok);
+      ok.focus();
+    });
+  };
+  window.prompt = function(message, defaultValue){
+    return new Promise(function(resolve){
+      const built = buildOverlay(String(message), {showInput:true, defaultValue:defaultValue});
+      const cancel = document.createElement("button");
+      cancel.className = "__w12dlg-btn";
+      cancel.textContent = "Cancel";
+      cancel.onclick = function(){ built.overlay.remove(); resolve(null); };
+      const ok = document.createElement("button");
+      ok.className = "__w12dlg-btn __w12dlg-primary";
+      ok.textContent = "OK";
+      function submit(){ built.overlay.remove(); resolve(built.input.value); }
+      ok.onclick = submit;
+      built.input.addEventListener("keydown", function(e){
+        if(e.key==="Enter") submit();
+        else if(e.key==="Escape"){ built.overlay.remove(); resolve(null); }
+      });
+      built.actions.appendChild(cancel);
+      built.actions.appendChild(ok);
+    });
+  };
+})();
+<\/script>
+`;
+function withCustomDialogs(code){
+  const src = code || "";
+  if(/<head[^>]*>/i.test(src)) return src.replace(/<head[^>]*>/i, (m)=>m+DIALOG_SHIM);
+  if(/<html[^>]*>/i.test(src)) return src.replace(/<html[^>]*>/i, (m)=>m+DIALOG_SHIM);
+  return DIALOG_SHIM + src;
+}
+
+const DEFAULT_VFS_DATA = {
+  "Desktop": {type:"folder", children:{
+    "Welcome.txt": {type:"text", content:"Welcome to Windows 12!\n\nThis is a fake desktop OS built entirely with HTML, CSS and JavaScript.\nDouble-click a file to actually open it — text files open in Notepad, pictures open in Photos.\nRight-click any icon for Open / Rename / Delete, or right-click empty desktop space to create new items — including your own HTML apps and web apps.\nIcons can be dragged around and snap to the grid. Everything you change is saved automatically."},
+    "Project Notes.txt": {type:"text", content:"FadanSMP TODO:\n- Fix chat render bug in FadanClient (duplicate @Override on render)\n- Polish Fadan Launcher glass UI\n- Update ItemShop pricing"},
+    "My App": {type:"app", code: DEFAULT_APP_TEMPLATE}
+  }},
+  "Documents": {type:"folder", children:{
+    "Resume.docx": {type:"text", content:"(Plain-text preview — .docx formatting isn't rendered here)\n\nFadan\nMinecraft server developer & plugin author"},
+    "FadanSMP Plans.txt": {type:"text", content:"Plugins in progress:\n- LifeStealPlus\n- RankSystem\n- ItemShop v2"}
+  }},
+  "Pictures": {type:"folder", children:{
+    "Wallpaper.png": {type:"image", url:"https://picsum.photos/seed/w12wallpaper/1000/650"},
+    "Screenshot.png": {type:"image", url:"https://picsum.photos/seed/w12screenshot/1000/650"}
+  }},
+  "Downloads": {type:"folder", children:{
+    "installer.exe": {type:"binary"},
+    "archive.zip": {type:"binary"}
+  }},
+};
+
+const VFS = Store.get("w12:vfs", DEFAULT_VFS_DATA);
+
+// path = array of names, e.g. ["Desktop","Sub Folder"]. VFS itself is the root's children map.
+function getNode(path){
+  let node = {type:"folder", children:VFS};
+  for(const part of path){
+    node = (node && node.children) ? node.children[part] : undefined;
+  }
+  return node;
+}
+function getChildren(path){
+  const node = getNode(path);
+  return (node && node.children) ? node.children : {};
+}
+function iconForNode(node){
+  if(node.type==="folder") return "📁";
+  if(node.type==="image") return "🖼️";
+  if(node.type==="binary") return "⚙️";
+  if(node.type==="app") return "🧩";
+  if(node.type==="webapp") return "🌐";
+  return "📄";
+}
+function openFile(path){
+  const node = getNode(path);
+  if(!node) return;
+  const name = path[path.length-1];
+  if(node.type==="folder"){
+    openApp("explorer", {payload:{path}});
+  } else if(node.type==="text"){
+    openApp("notepad", {
+      instanceId:"notepad:"+path.join("/"), title:name, icon:"📝",
+      payload:{path, content:node.content}
+    });
+  } else if(node.type==="image"){
+    openApp("photos", {
+      instanceId:"photos:"+path.join("/"), title:name, icon:"🖼️",
+      payload:{path, url:node.url}
+    });
+  } else if(node.type==="app"){
+    openApp("customapp", {
+      instanceId:"customapp:"+path.join("/"), title:name, icon:"🧩",
+      payload:{code:node.code, jsAllowed: node.jsAllowed !== false}
+    });
+  } else if(node.type==="webapp"){
+    openApp("webapp", {
+      instanceId:"webapp:"+path.join("/"), title:name, icon:"🌐",
+      payload:{url:node.url}
+    });
+  } else {
+    toast("Can't open "+name+" — no app associated with this file type.");
+  }
+}
+function openCodeEditor(path){
+  const node = getNode(path);
+  const name = path[path.length-1];
+  openApp("codeeditor", {
+    instanceId:"codeeditor:"+path.join("/"), title:"Edit — "+name, icon:"🧩",
+    payload:{path, code: node ? (node.code || "") : DEFAULT_APP_TEMPLATE}
+  });
+}
+async function createWebAppIn(children, refreshCb){
+  const name = await askName("Web app name", "My Web App");
+  if(!name) return;
+  if(children[name]){ toast('An item named "'+name+'" already exists'); return; }
+  let url = await askName("Web app address (URL)", "https://example.com");
+  if(!url) return;
+  if(!/^https?:\/\//i.test(url)) url = "https://"+url;
+  children[name] = {type:"webapp", url};
+  refreshCb();
+  scheduleSave();
+}
+
+/* ============ Save / restore state ============ */
+let saveTimer = null;
+function saveState(){
+  Store.set("w12:vfs", VFS);
+  Store.set("w12:iconPositions", iconPositions);
+  Store.set("w12:settings", {
+    light: document.body.classList.contains("light"),
+    accent1: document.documentElement.style.getPropertyValue("--accent-1") || null,
+    accent2: document.documentElement.style.getPropertyValue("--accent-2") || null,
+    wallpaperMotion: document.getElementById("wallpaper").style.animationPlayState !== "paused",
+    brightness: currentBrightness,
+    volume: currentVolume,
+    qsTiles: QS_TILES.map(t=>({id:t.id, on:t.on}))
+  });
+}
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveState, 250);
+}
+const savedSettings = Store.get("w12:settings", null);
+let currentBrightness = savedSettings ? savedSettings.brightness : 70;
+let currentVolume = savedSettings ? savedSettings.volume : 55;
+function applyBrightness(v){
+  currentBrightness = v;
+  document.documentElement.style.filter = "brightness("+(0.35 + (v/100)*0.65)+")";
+}
+
+/* ============ Clock ============ */
+function pad(n){return n.toString().padStart(2,"0");}
+function updateClocks(){
+  const d = new Date();
+  const t = pad(d.getHours())+":"+pad(d.getMinutes());
+  const dateStr = d.toLocaleDateString(undefined,{day:"2-digit", month:"2-digit", year:"numeric"});
+  document.getElementById("clock-time").textContent = t;
+  document.getElementById("clock-date").textContent = dateStr;
+  document.getElementById("lk-time").textContent = t;
+  document.getElementById("lk-date").textContent = d.toLocaleDateString(undefined,{weekday:"long", day:"numeric", month:"long", year:"numeric"});
+}
+updateClocks();
+setInterval(updateClocks, 1000);
+
+/* ============ Lock screen ============ */
+const lockEl = document.getElementById("lock");
+const lockPinWrap = document.getElementById("lk-pin-wrap");
+const lockPinInput = document.getElementById("lk-pin-input");
+const lockPinError = document.getElementById("lk-pin-error");
+const lockHint = document.getElementById("lk-hint");
+
+function getPin(){ return Store.get("w12:pin", null); }
+function setPin(pin){
+  if(pin) Store.set("w12:pin", pin); else Store.remove("w12:pin");
+  refreshLockUI();
+}
+function refreshLockUI(){
+  const pin = getPin();
+  if(pin){
+    lockPinWrap.style.display = "flex";
+    lockHint.textContent = "Enter your PIN to unlock";
+  } else {
+    lockPinWrap.style.display = "none";
+    lockHint.textContent = "Click anywhere to unlock";
+  }
+  lockPinError.textContent = "";
+  if(lockPinInput) lockPinInput.value = "";
+}
+refreshLockUI();
+if(getPin()) setTimeout(()=>lockPinInput.focus(), 200);
+
+lockEl.addEventListener("click", ()=>{
+  if(!getPin()) lockEl.style.display="none";
+});
+lockPinInput.addEventListener("keydown",(e)=>{
+  e.stopPropagation();
+  if(e.key==="Enter"){
+    const pin = getPin();
+    if(lockPinInput.value === pin){
+      lockEl.style.display="none";
+      lockPinInput.value="";
+      lockPinError.textContent="";
+    } else {
+      lockPinError.textContent="Incorrect PIN";
+      lockPinInput.value="";
+    }
+  }
+});
+function lockScreen(){
+  closeStart();
+  refreshLockUI();
+  lockEl.style.display="flex";
+  if(getPin()) setTimeout(()=>lockPinInput.focus(), 50);
+}
+
+/* ============ Toasts ============ */
+function toast(msg){
+  const wrap = document.getElementById("toast-wrap");
+  const el = document.createElement("div");
+  el.className="toast";
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.style.transition="opacity .25s ease"; el.style.opacity="0"; setTimeout(()=>el.remove(),260); }, 2600);
+}
+if(!Store.usingLocal()){
+  toast("Storage is restricted in this preview — changes won't survive a reload here. Download the file and open it in a browser to keep them.");
+}
+
+/* ============ Modal dialog (used instead of window.prompt, which sandboxed
+   iframes like this one often block) ============ */
+const modalOverlay = document.getElementById("modal-overlay");
+const modalTitle = document.getElementById("modal-title");
+const modalInput = document.getElementById("modal-input");
+const modalOk = document.getElementById("modal-ok");
+const modalCancel = document.getElementById("modal-cancel");
+function askName(title, defaultValue){
+  return new Promise((resolve)=>{
+    modalTitle.textContent = title;
+    modalInput.value = defaultValue || "";
+    modalOverlay.style.display = "flex";
+    setTimeout(()=>{ modalInput.focus(); modalInput.select(); }, 30);
+    function cleanup(result){
+      modalOverlay.style.display="none";
+      modalOk.removeEventListener("click", onOk);
+      modalCancel.removeEventListener("click", onCancel);
+      modalInput.removeEventListener("keydown", onKey);
+      resolve(result);
+    }
+    function onOk(){ cleanup(modalInput.value.trim() || null); }
+    function onCancel(){ cleanup(null); }
+    function onKey(e){
+      e.stopPropagation();
+      if(e.key==="Enter"){ onOk(); }
+      else if(e.key==="Escape"){ onCancel(); }
+    }
+    modalOk.addEventListener("click", onOk);
+    modalCancel.addEventListener("click", onCancel);
+    modalInput.addEventListener("keydown", onKey);
+  });
+}
+modalOverlay.addEventListener("click",(e)=>{ if(e.target===modalOverlay){ modalCancel.click(); } });
+
+/* ============ Desktop icons (draggable, snap-to-grid) ============ */
+const desktopEl = document.getElementById("desktop");
+const iconPositions = Store.get("w12:iconPositions", {}); // stableId -> {x,y}
+const GRID_SIZE = 104;
+const GRID_ORIGIN = 20;
+function snapToGrid(px){
+  return Math.max(GRID_ORIGIN, GRID_ORIGIN + Math.round((px-GRID_ORIGIN)/GRID_SIZE)*GRID_SIZE);
+}
+let dragState = null;
+
+document.addEventListener("mousemove",(e)=>{
+  if(!dragState) return;
+  const dx = e.clientX-dragState.sx, dy = e.clientY-dragState.sy;
+  if(Math.abs(dx)>3 || Math.abs(dy)>3) dragState.moved = true;
+  if(dragState.moved){
+    dragState.div.style.left = Math.max(0, dragState.ox+dx)+"px";
+    dragState.div.style.top = Math.max(0, dragState.oy+dy)+"px";
+  }
+});
+document.addEventListener("mouseup",()=>{
+  if(dragState && dragState.moved){
+    const div = dragState.div;
+    const snappedX = snapToGrid(parseInt(div.style.left));
+    const snappedY = snapToGrid(parseInt(div.style.top));
+    div.classList.add("snap-anim");
+    div.style.left = snappedX+"px";
+    div.style.top = snappedY+"px";
+    setTimeout(()=>div.classList.remove("snap-anim"), 150);
+    iconPositions[dragState.stableId] = {x:snappedX, y:snappedY};
+    div.dataset.justDragged = "1";
+    scheduleSave();
+  }
+  dragState = null;
+});
+
+function renderDesktopIcons(){
+  desktopEl.innerHTML="";
+  const used = new Set(Object.values(iconPositions).map(p=>p.x+","+p.y));
+  let cursorX=GRID_ORIGIN, cursorY=GRID_ORIGIN;
+  function nextSlot(){
+    while(used.has(cursorX+","+cursorY)){
+      cursorY+=GRID_SIZE;
+      if(cursorY>620){ cursorY=GRID_ORIGIN; cursorX+=GRID_SIZE; }
+    }
+    const pos = {x:cursorX, y:cursorY};
+    used.add(cursorX+","+cursorY);
+    cursorY+=GRID_SIZE;
+    if(cursorY>620){ cursorY=GRID_ORIGIN; cursorX+=GRID_SIZE; }
+    return pos;
+  }
+
+  function placeIcon(stableId, glyph, label, onOpen, onCtx){
+    const pos = iconPositions[stableId] || nextSlot();
+    const div = document.createElement("div");
+    div.className="icon";
+    div.style.left=pos.x+"px"; div.style.top=pos.y+"px";
+    div.innerHTML = `<div class="glyph">${glyph}</div><div class="label">${label}</div>`;
+    desktopEl.appendChild(div);
+
+    div.addEventListener("mousedown",(e)=>{
+      dragState = {div, stableId, sx:e.clientX, sy:e.clientY, ox:div.offsetLeft, oy:div.offsetTop, moved:false};
+      e.stopPropagation();
+    });
+    div.addEventListener("click",(e)=>{
+      e.stopPropagation();
+      if(div.dataset.justDragged){ delete div.dataset.justDragged; return; }
+      document.querySelectorAll(".icon").forEach(i=>i.classList.remove("selected"));
+      div.classList.add("selected");
+    });
+    div.addEventListener("dblclick", ()=>onOpen());
+    if(onCtx){
+      div.addEventListener("contextmenu",(e)=>{ e.preventDefault(); e.stopPropagation(); onCtx(e); });
+    }
+  }
+
+  placeIcon("app:thispc", "💻", "This PC", ()=>openApp("explorer"));
+
+  DESKTOP_ICONS.forEach(id=>{
+    const app = APPS[id];
+    placeIcon("app:"+id, app.icon, app.name, ()=>openApp(id), (e)=>showSystemIconMenu(e, id));
+  });
+
+  Object.entries(getChildren(["Desktop"])).forEach(([name,node])=>{
+    const path = ["Desktop", name];
+    placeIcon("vfs:"+path.join("/"), iconForNode(node), name,
+      ()=>openFile(path),
+      (e)=>showItemContextMenu(e, path, renderDesktopIcons));
+  });
+}
+renderDesktopIcons();
+document.getElementById("desktop").addEventListener("click", ()=>{
+  document.querySelectorAll(".icon").forEach(i=>i.classList.remove("selected"));
+});
+
+/* ============ Start menu pinned/recommended ============ */
+function renderStartMenu(){
+  const pinnedWrap = document.getElementById("sm-pinned");
+  const recWrap = document.getElementById("sm-recommended");
+  pinnedWrap.innerHTML=""; recWrap.innerHTML="";
+  Object.entries(APPS).forEach(([id,app])=>{
+    const div = document.createElement("div");
+    div.className="sm-app";
+    div.innerHTML = `<div class="glyph">${app.icon}</div><div class="label">${app.name}</div>`;
+    div.addEventListener("click", ()=>{ openApp(id); closeStart(); });
+    if(app.pinned) pinnedWrap.appendChild(div);
+  });
+  ["notepad","browser","settings"].forEach(id=>{
+    const app = APPS[id];
+    const div = document.createElement("div");
+    div.className="sm-app";
+    div.innerHTML = `<div class="glyph">${app.icon}</div><div class="label">${app.name}</div>`;
+    div.addEventListener("click", ()=>{ openApp(id); closeStart(); });
+    recWrap.appendChild(div);
+  });
+}
+renderStartMenu();
+
+/* ============ Search (apps + files + custom/web apps) ============ */
+function flattenVFS(path=[]){
+  let items = [];
+  Object.entries(getChildren(path)).forEach(([name,node])=>{
+    const fullPath = [...path, name];
+    items.push({path:fullPath, name, node});
+    if(node.type==="folder") items = items.concat(flattenVFS(fullPath));
+  });
+  return items;
+}
+function buildSearchIndex(){
+  const items = [];
+  Object.entries(APPS).forEach(([id,app])=>{
+    items.push({kind:"app", id, name:app.name, icon:app.icon});
+  });
+  flattenVFS().forEach(it=>{
+    items.push({kind:"file", path:it.path, name:it.name, node:it.node, icon:iconForNode(it.node)});
+  });
+  return items;
+}
+function openSearchResult(it){
+  if(it.kind==="app"){ openApp(it.id); return; }
+  openFile(it.path);
+}
+function runSearch(query){
+  const q = query.trim().toLowerCase();
+  const resultsWrap = document.getElementById("sm-results");
+  const browseWrap = document.getElementById("sm-browse");
+  if(!q){
+    resultsWrap.style.display="none";
+    resultsWrap.innerHTML="";
+    browseWrap.style.display="block";
+    return;
+  }
+  browseWrap.style.display="none";
+  resultsWrap.style.display="block";
+  const matches = buildSearchIndex().filter(it=>{
+    if(it.kind==="app") return it.name.toLowerCase().includes(q);
+    const inName = it.name.toLowerCase().includes(q);
+    const inContent = it.node.type==="text" && it.node.content && it.node.content.toLowerCase().includes(q);
+    return inName || inContent;
+  });
+  if(matches.length===0){
+    resultsWrap.innerHTML = `<div style="padding:24px 4px; text-align:center; color:var(--text-dim); font-size:13px;">No results for "${query}"</div>`;
+    return;
+  }
+  resultsWrap.innerHTML="";
+  matches.slice(0,20).forEach(it=>{
+    const row = document.createElement("div");
+    row.className="sm-app";
+    row.style.cssText="flex-direction:row; justify-content:flex-start; gap:12px; padding:10px 12px; width:100%;";
+    const sub = it.kind==="app" ? "App" : (it.path.slice(0,-1).join(" / ") || "This PC");
+    row.innerHTML = `<div class="glyph">${it.icon}</div><div style="text-align:left;"><div class="label" style="font-size:13px;">${it.name}</div><div style="font-size:11px; color:var(--text-dim);">${sub}</div></div>`;
+    row.addEventListener("click", ()=>{ openSearchResult(it); closeStart(); });
+    resultsWrap.appendChild(row);
+  });
+}
+const smSearchInput = document.getElementById("sm-search-input");
+smSearchInput.addEventListener("input", ()=>runSearch(smSearchInput.value));
+smSearchInput.addEventListener("keydown",(e)=>{
+  if(e.key==="Enter"){
+    const first = document.querySelector("#sm-results .sm-app");
+    if(first) first.click();
+  } else if(e.key==="Escape"){
+    smSearchInput.value=""; runSearch("");
+  }
+  e.stopPropagation();
+});
+
+/* ============ Start menu + Action center toggling ============ */
+const startMenu = document.getElementById("start-menu");
+const actionCenter = document.getElementById("action-center");
+function openStart(){
+  actionCenter.classList.remove("open");
+  startMenu.classList.add("open");
+  setTimeout(()=>smSearchInput.focus(), 60);
+}
+function closeStart(){
+  startMenu.classList.remove("open");
+  smSearchInput.value="";
+  runSearch("");
+}
+function toggleStart(){ startMenu.classList.contains("open") ? closeStart() : openStart(); }
+document.getElementById("tb-start").addEventListener("click", (e)=>{ toggleStart(); e.stopPropagation(); });
+document.getElementById("tb-search").addEventListener("click", (e)=>{ openStart(); e.stopPropagation(); });
+
+function openActionCenter(){ closeStart(); actionCenter.classList.add("open"); }
+function closeActionCenter(){ actionCenter.classList.remove("open"); }
+function toggleActionCenter(){ actionCenter.classList.contains("open") ? closeActionCenter() : openActionCenter(); }
+document.getElementById("tb-tray").addEventListener("click",(e)=>{ toggleActionCenter(); e.stopPropagation(); });
+document.getElementById("tb-clock").addEventListener("click",(e)=>{ toggleActionCenter(); e.stopPropagation(); });
+
+document.addEventListener("click", (e)=>{
+  if(!startMenu.contains(e.target)) closeStart();
+  if(!actionCenter.contains(e.target)) closeActionCenter();
+});
+
+const QS_TILES = [
+  {id:"wifi", label:"Wi-Fi", icon:"📶", on:true},
+  {id:"bt", label:"Bluetooth", icon:"🔷", on:false},
+  {id:"airplane", label:"Airplane mode", icon:"✈️", on:false},
+  {id:"focus", label:"Focus assist", icon:"🌙", on:false},
+];
+if(savedSettings && savedSettings.qsTiles){
+  savedSettings.qsTiles.forEach(saved=>{
+    const tile = QS_TILES.find(t=>t.id===saved.id);
+    if(tile) tile.on = saved.on;
+  });
+}
+function renderQS(){
+  const grid = document.getElementById("qs-grid");
+  grid.innerHTML="";
+  QS_TILES.forEach(t=>{
+    const div=document.createElement("div");
+    div.className="qs-tile"+(t.on?" on":"");
+    div.innerHTML=`<span>${t.icon}</span><span>${t.label}</span>`;
+    div.addEventListener("click", ()=>{ t.on=!t.on; renderQS(); toast(t.label+(t.on?" turned on":" turned off")); scheduleSave(); });
+    grid.appendChild(div);
+  });
+}
+renderQS();
+
+// Brightness / volume sliders — restore saved values and persist on change
+const brightnessSlider = document.getElementById("brightness-slider");
+const volumeSlider = document.getElementById("volume-slider");
+brightnessSlider.value = currentBrightness;
+volumeSlider.value = currentVolume;
+applyBrightness(currentBrightness);
+brightnessSlider.addEventListener("input", ()=>{ applyBrightness(parseInt(brightnessSlider.value)); scheduleSave(); });
+volumeSlider.addEventListener("input", ()=>{ currentVolume = parseInt(volumeSlider.value); scheduleSave(); });
+
+// Apply saved theme / accent / wallpaper motion
+if(savedSettings){
+  if(savedSettings.light) document.body.classList.add("light");
+  if(savedSettings.accent1) document.documentElement.style.setProperty("--accent-1", savedSettings.accent1);
+  if(savedSettings.accent2) document.documentElement.style.setProperty("--accent-2", savedSettings.accent2);
+  if(savedSettings.wallpaperMotion === false){
+    document.getElementById("wallpaper").style.animationPlayState = "paused";
+  }
+}
+
+/* ============ Context menus ============ */
+const ctxMenu = document.getElementById("ctx-menu");
+function positionCtx(e){
+  ctxMenu.style.left = e.clientX+"px";
+  ctxMenu.style.top = e.clientY+"px";
+  ctxMenu.style.display="block";
+}
+function hideCtx(){ ctxMenu.style.display="none"; }
+document.addEventListener("click", hideCtx);
+
+function showSystemIconMenu(e, appId){
+  const app = APPS[appId];
+  ctxMenu.innerHTML = `<div class="ctx-item" data-open>${app.icon} Open</div>`;
+  ctxMenu.querySelector("[data-open]").addEventListener("click", ()=>{ hideCtx(); openApp(appId); });
+  positionCtx(e);
+}
+
+function showItemContextMenu(e, path, onChange){
+  const node = getNode(path);
+  if(!node) return;
+  const name = path[path.length-1];
+  const editRow =
+    node.type==="app" ? `<div class="ctx-item" data-edit>🧩 Edit code</div>` :
+    node.type==="webapp" ? `<div class="ctx-item" data-editurl>🌐 Edit address</div>` : "";
+  ctxMenu.innerHTML = `
+    <div class="ctx-item" data-open>📂 Open</div>
+    ${editRow}
+    <div class="ctx-item" data-rename>✏️ Rename</div>
+    <div class="ctx-item" data-delete>🗑️ Delete</div>
+  `;
+  ctxMenu.querySelector("[data-open]").addEventListener("click", ()=>{ hideCtx(); openFile(path); });
+  if(node.type==="app"){
+    ctxMenu.querySelector("[data-edit]").addEventListener("click", ()=>{ hideCtx(); openCodeEditor(path); });
+  }
+  if(node.type==="webapp"){
+    ctxMenu.querySelector("[data-editurl]").addEventListener("click", async ()=>{
+      hideCtx();
+      let url = await askName("Web app address (URL)", node.url);
+      if(!url) return;
+      if(!/^https?:\/\//i.test(url)) url = "https://"+url;
+      node.url = url;
+      scheduleSave();
+      toast("Address updated");
+    });
+  }
+  ctxMenu.querySelector("[data-rename]").addEventListener("click", async ()=>{
+    hideCtx();
+    const newName = await askName("Rename to", name);
+    if(!newName || newName===name) return;
+    const parent = getChildren(path.slice(0,-1));
+    if(parent[newName]){ toast('An item named "'+newName+'" already exists'); return; }
+    parent[newName] = parent[name];
+    delete parent[name];
+    onChange && onChange();
+    renderDesktopIcons();
+    scheduleSave();
+  });
+  ctxMenu.querySelector("[data-delete]").addEventListener("click", ()=>{
+    hideCtx();
+    const parent = getChildren(path.slice(0,-1));
+    delete parent[name];
+    onChange && onChange();
+    renderDesktopIcons();
+    toast(name+" deleted");
+    scheduleSave();
+  });
+  positionCtx(e);
+}
+
+document.getElementById("desktop").addEventListener("contextmenu",(e)=>{
+  if(e.target.closest(".icon")) return; // icons handle their own menu and stop propagation
+  e.preventDefault();
+  ctxMenu.innerHTML = `
+    <div class="ctx-item" data-refresh>🔄 Refresh</div>
+    <hr>
+    <div class="ctx-item" data-newfolder>📁 New folder</div>
+    <div class="ctx-item" data-newtext>📝 New text document</div>
+    <div class="ctx-item" data-newapp>🧩 New app…</div>
+    <div class="ctx-item" data-newweb>🌐 New web app…</div>
+    <hr>
+    <div class="ctx-item" data-personalize>🎨 Personalize</div>
+  `;
+  ctxMenu.querySelector("[data-refresh]").addEventListener("click", ()=>{ hideCtx(); renderDesktopIcons(); });
+  ctxMenu.querySelector("[data-newfolder]").addEventListener("click", async ()=>{
+    hideCtx();
+    const name = await askName("New folder name", "New folder");
+    if(!name) return;
+    const children = getChildren(["Desktop"]);
+    if(children[name]){ toast('An item named "'+name+'" already exists'); return; }
+    children[name] = {type:"folder", children:{}};
+    renderDesktopIcons();
+    scheduleSave();
+  });
+  ctxMenu.querySelector("[data-newtext]").addEventListener("click", async ()=>{
+    hideCtx();
+    let name = await askName("New file name", "New Text Document.txt");
+    if(!name) return;
+    if(!/\.txt$/i.test(name)) name += ".txt";
+    const children = getChildren(["Desktop"]);
+    if(children[name]){ toast('An item named "'+name+'" already exists'); return; }
+    children[name] = {type:"text", content:""};
+    renderDesktopIcons();
+    openFile(["Desktop", name]);
+    scheduleSave();
+  });
+  ctxMenu.querySelector("[data-newapp]").addEventListener("click", async ()=>{
+    hideCtx();
+    let name = await askName("New app name", "My App");
+    if(!name) return;
+    const children = getChildren(["Desktop"]);
+    if(children[name]){ toast('An item named "'+name+'" already exists'); return; }
+    children[name] = {type:"app", code: DEFAULT_APP_TEMPLATE};
+    renderDesktopIcons();
+    openCodeEditor(["Desktop", name]);
+    scheduleSave();
+  });
+  ctxMenu.querySelector("[data-newweb]").addEventListener("click", async ()=>{
+    hideCtx();
+    await createWebAppIn(getChildren(["Desktop"]), renderDesktopIcons);
+  });
+  ctxMenu.querySelector("[data-personalize]").addEventListener("click", ()=>{ hideCtx(); openApp("settings"); });
+  positionCtx(e);
+});
+
+/* ============ Window manager ============ */
+let zTop = 10;
+const openWindows = {};      // key -> {el, btn, maximized, prevRect}
+const appNavigators = {};    // key -> function(payload) — lets a singleton window (e.g. Explorer) re-render in place
+
+function safeId(s){ return String(s).replace(/[^a-zA-Z0-9_-]/g,"_"); }
+
+// id = which app renderer to use (e.g. "notepad"), opts = {instanceId, title, icon, payload}
+// instanceId lets the same app be opened multiple times (e.g. one window per file).
+function openApp(id, opts={}){
+  const key = opts.instanceId || id;
+  if(openWindows[key]){
+    focusWindow(key);
+    if(opts.payload && appNavigators[key]) appNavigators[key](opts.payload);
+    return;
+  }
+  const app = APPS[id] || {};
+  const title = opts.title || app.name || id;
+  const icon = opts.icon || app.icon || "🗔";
+  const bodyId = "body-"+safeId(key);
+
+  const win = document.createElement("div");
+  win.className="win";
+  const n = Object.keys(openWindows).length;
+  win.style.left = (120 + n*24)+"px";
+  win.style.top = (80 + n*24)+"px";
+  win.style.width = "680px";
+  win.style.height = "480px";
+  win.style.zIndex = ++zTop;
+
+  win.innerHTML = `
+    <div class="titlebar" data-drag>
+      <span class="ttl-icon">${icon}</span>
+      <span class="ttl-text">${title}</span>
+      <button class="winbtn" data-min>—</button>
+      <button class="winbtn" data-max>▢</button>
+      <button class="winbtn close" data-close>✕</button>
+    </div>
+    <div class="win-body" id="${bodyId}"></div>
+    <div class="resize-handle"></div>
+  `;
+  document.body.appendChild(win);
+  makeDraggable(win, win.querySelector("[data-drag]"));
+  makeResizable(win);
+  win.addEventListener("mousedown", ()=>focusWindow(key));
+
+  win.querySelector("[data-close]").addEventListener("click", ()=>closeApp(key));
+  win.querySelector("[data-min]").addEventListener("click", ()=>minimizeApp(key));
+  win.querySelector("[data-max]").addEventListener("click", ()=>toggleMaximize(key));
+
+  const nav = renderAppContent(id, win.querySelector("#"+bodyId), opts.payload);
+  if(nav) appNavigators[key] = nav;
+
+  const tbBtn = document.createElement("button");
+  tbBtn.className="tb-btn active";
+  tbBtn.textContent = icon;
+  tbBtn.title = title;
+  tbBtn.addEventListener("click", ()=>{
+    if(win.style.display==="none"){ minimizeApp(key); } else { focusWindow(key); }
+  });
+  document.getElementById("tb-running").appendChild(tbBtn);
+
+  openWindows[key] = {el:win, btn:tbBtn, maximized:false, prevRect:null};
+}
+
+function focusWindow(key){
+  const w = openWindows[key];
+  if(!w) return;
+  w.el.style.display="flex";
+  w.el.style.zIndex = ++zTop;
+}
+function minimizeApp(key){
+  const w = openWindows[key];
+  w.el.style.display = (w.el.style.display==="none") ? "flex" : "none";
+}
+function toggleMaximize(key){
+  const w = openWindows[key];
+  const el = w.el;
+  if(!w.maximized){
+    w.prevRect = {left:el.style.left, top:el.style.top, width:el.style.width, height:el.style.height};
+    el.style.left="0px"; el.style.top="0px";
+    el.style.width="100vw"; el.style.height="calc(100vh - 78px)";
+    el.classList.add("maximized");
+    w.maximized=true;
+  } else {
+    Object.assign(el.style, w.prevRect);
+    el.classList.remove("maximized");
+    w.maximized=false;
+  }
+}
+function closeApp(key){
+  const w = openWindows[key];
+  if(!w) return;
+  w.el.remove();
+  w.btn.remove();
+  delete openWindows[key];
+  delete appNavigators[key];
+}
+
+function makeDraggable(win, handle){
+  let sx,sy,ox,oy,dragging=false;
+  handle.addEventListener("mousedown",(e)=>{
+    if(e.target.closest(".winbtn")) return;
+    dragging=true; sx=e.clientX; sy=e.clientY;
+    ox=win.offsetLeft; oy=win.offsetTop;
+    win.style.zIndex = ++zTop;
+  });
+  document.addEventListener("mousemove",(e)=>{
+    if(!dragging) return;
+    win.style.left = (ox + (e.clientX-sx))+"px";
+    win.style.top = Math.max(0, oy + (e.clientY-sy))+"px";
+  });
+  document.addEventListener("mouseup",()=>dragging=false);
+}
+function makeResizable(win){
+  const handle = win.querySelector(".resize-handle");
+  let sx,sy,ow,oh,resizing=false;
+  handle.addEventListener("mousedown",(e)=>{
+    resizing=true; sx=e.clientX; sy=e.clientY;
+    ow=win.offsetWidth; oh=win.offsetHeight;
+    e.stopPropagation();
+  });
+  document.addEventListener("mousemove",(e)=>{
+    if(!resizing) return;
+    win.style.width = Math.max(340, ow+(e.clientX-sx))+"px";
+    win.style.height = Math.max(220, oh+(e.clientY-sy))+"px";
+  });
+  document.addEventListener("mouseup",()=>resizing=false);
+}
+
+/* ============ App content ============ */
+function renderAppContent(id, body, payload){
+  if(id==="notepad") return renderNotepad(body, payload);
+  if(id==="photos") return renderPhotos(body, payload);
+  if(id==="codeeditor") return renderCodeEditor(body, payload);
+  if(id==="customapp") return renderCustomApp(body, payload);
+  if(id==="webapp") return renderWebApp(body, payload);
+  if(id==="calc") return renderCalc(body);
+  if(id==="explorer") return renderExplorer(body, payload);
+  if(id==="settings") return renderSettings(body);
+  if(id==="browser") return renderBrowser(body);
+  if(id==="widgets") return renderWidgets(body);
+  if(id==="bin") return renderBin(body);
+}
+
+function renderNotepad(body, payload){
+  const hasFile = payload && payload.path;
+  const filename = hasFile ? payload.path[payload.path.length-1] : null;
+  const folderLabel = hasFile ? (payload.path.slice(0,-1).join(" / ") || "This PC") : null;
+  body.innerHTML = `
+    <div style="display:flex; flex-direction:column; height:100%;">
+      ${hasFile ? `<div class="browser-bar" style="border-bottom:1px solid var(--border);">
+        <span style="font-size:12px; color:var(--text-dim); flex:1;">${folderLabel} / ${filename}</span>
+        <button class="winbtn" data-save title="Save">💾</button>
+      </div>` : ``}
+      <textarea class="np" id="np-area" placeholder="Type something..." style="flex:1;"></textarea>
+    </div>`;
+  const area = body.querySelector("#np-area");
+  area.value = hasFile ? (payload.content || "") : "Welcome to Windows 12 Notepad.";
+  if(hasFile){
+    const doSave = ()=>{
+      const parent = getChildren(payload.path.slice(0,-1));
+      parent[filename] = {type:"text", content:area.value};
+      renderDesktopIcons();
+      toast(filename+" saved");
+      scheduleSave();
+    };
+    body.querySelector("[data-save]").addEventListener("click", doSave);
+    area.addEventListener("keydown",(e)=>{
+      if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==="s"){ e.preventDefault(); doSave(); }
+    });
+  }
+}
+
+function renderPhotos(body, payload){
+  const fallback = 'data:image/svg+xml;utf8,'+encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500"><rect width="100%" height="100%" fill="#20223a"/><text x="50%" y="50%" fill="#8a8fb0" font-family="sans-serif" font-size="22" text-anchor="middle">Preview unavailable</text></svg>`
+  );
+  body.innerHTML = `<div style="display:flex; align-items:center; justify-content:center; height:100%; background:#0b0b12;">
+      <img id="photo-img" src="${payload.url}" alt="photo" style="max-width:100%; max-height:100%; object-fit:contain;">
+    </div>`;
+  const img = body.querySelector("#photo-img");
+  img.addEventListener("error", ()=>{ img.src = fallback; }, {once:true});
+}
+
+function renderCodeEditor(body, payload){
+  const existingNode = payload.path ? getNode(payload.path) : null;
+  let jsAllowed = existingNode ? (existingNode.jsAllowed !== false) : true;
+
+  body.innerHTML = `
+    <div style="display:flex; flex-direction:column; height:100%;">
+      <div class="browser-bar" style="border-bottom:1px solid var(--border);">
+        <span style="font-size:12px; color:var(--text-dim); flex:1;">HTML app code — edit, then Run or Save</span>
+        <label style="display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--text-dim); cursor:pointer;">
+          <input type="checkbox" id="ce-js-allowed" ${jsAllowed ? "checked" : ""}> Allow JavaScript
+        </label>
+        <button class="winbtn" data-run title="Run">▶</button>
+        <button class="winbtn" data-save title="Save">💾</button>
+      </div>
+      <div style="flex:1; display:flex; min-height:0;">
+        <textarea id="ce-code" class="np" style="width:50%; border-right:1px solid var(--border);" spellcheck="false"></textarea>
+        <iframe id="ce-preview" style="width:50%; border:none; background:#fff;" sandbox="allow-scripts allow-modals allow-forms allow-popups"></iframe>
+      </div>
+    </div>`;
+  const codeArea = body.querySelector("#ce-code");
+  const preview = body.querySelector("#ce-preview");
+  const jsCheckbox = body.querySelector("#ce-js-allowed");
+  codeArea.value = payload.code || DEFAULT_APP_TEMPLATE;
+
+  function run(){
+    preview.sandbox = jsAllowed
+      ? "allow-scripts allow-modals allow-forms allow-popups"
+      : "allow-forms allow-popups";
+    preview.srcdoc = jsAllowed ? withCustomDialogs(codeArea.value) : codeArea.value;
+  }
+  function save(){
+    const parent = getChildren(payload.path.slice(0,-1));
+    const filename = payload.path[payload.path.length-1];
+    parent[filename] = {type:"app", code: codeArea.value, jsAllowed};
+    renderDesktopIcons();
+    toast(filename+" saved");
+    scheduleSave();
+  }
+  jsCheckbox.addEventListener("change", ()=>{ jsAllowed = jsCheckbox.checked; run(); });
+  body.querySelector("[data-run]").addEventListener("click", run);
+  body.querySelector("[data-save]").addEventListener("click", save);
+  codeArea.addEventListener("keydown",(e)=>{
+    if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==="s"){ e.preventDefault(); save(); }
+  });
+  run();
+}
+
+function renderCustomApp(body, payload){
+  const jsOn = payload.jsAllowed !== false;
+  const sandboxAttrs = jsOn
+    ? "allow-scripts allow-modals allow-forms allow-popups allow-popups-to-escape-sandbox"
+    : "allow-forms allow-popups";
+  body.innerHTML = `<iframe style="width:100%; height:100%; border:none; background:#fff;"
+      sandbox="${sandboxAttrs}"></iframe>`;
+  const code = jsOn ? withCustomDialogs(payload.code || "") : (payload.code || "");
+  body.querySelector("iframe").srcdoc = code;
+  if(!jsOn){
+    const note = document.createElement("div");
+    note.style.cssText = "position:absolute; bottom:6px; right:8px; font-size:10.5px; color:rgba(0,0,0,.4); background:rgba(255,255,255,.7); padding:2px 6px; border-radius:6px;";
+    note.textContent = "JavaScript blocked (Settings → Apps & permissions)";
+    body.style.position = "relative";
+    body.appendChild(note);
+  }
+}
+
+function renderWebApp(body, payload){
+  body.innerHTML = `<iframe style="width:100%; height:100%; border:none; background:#fff;" src="${payload.url}"></iframe>`;
+}
+
+function renderCalc(body){
+  body.innerHTML = `
+    <div class="calc">
+      <div class="calc-display" id="calc-disp">0</div>
+      <div class="calc-grid" id="calc-grid"></div>
+    </div>`;
+  const disp = body.querySelector("#calc-disp");
+  const grid = body.querySelector("#calc-grid");
+  let expr="";
+  const keys = ["C","(",")","/","7","8","9","*","4","5","6","-","1","2","3","+","0",".","⌫","="];
+  keys.forEach(k=>{
+    const b=document.createElement("button");
+    b.className="calc-btn"+(["/","*","-","+","="].includes(k)?" op":"");
+    b.textContent=k;
+    b.addEventListener("click",()=>{
+      if(k==="C"){ expr=""; }
+      else if(k==="⌫"){ expr=expr.slice(0,-1); }
+      else if(k==="="){
+        try{ expr = String(Function('"use strict";return ('+expr+')')()); }
+        catch(e){ expr="Error"; }
+      } else { expr += k; }
+      disp.textContent = expr || "0";
+    });
+    grid.appendChild(b);
+  });
+}
+
+function renderExplorer(body, payload){
+  body.innerHTML = `<div class="fe-wrap">
+      <div class="fe-side" id="fe-side"></div>
+      <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+        <div class="browser-bar" id="fe-toolbar" style="border-bottom:1px solid var(--border); flex-wrap:wrap; height:auto; padding:6px 8px;"></div>
+        <div class="fe-main" id="fe-main"></div>
+      </div>
+    </div>`;
+  const side = body.querySelector("#fe-side");
+  const toolbar = body.querySelector("#fe-toolbar");
+  const main = body.querySelector("#fe-main");
+
+  Object.keys(VFS).forEach(folder=>{
+    const item=document.createElement("div");
+    item.className="fe-item";
+    item.innerHTML=`📁 ${folder}`;
+    item.addEventListener("click", ()=>renderPath([folder]));
+    side.appendChild(item);
+  });
+
+  function renderPath(path){
+    side.querySelectorAll(".fe-item").forEach(x=>{
+      x.classList.toggle("active", path.length>0 && x.textContent.trim()==="📁 "+path[0]);
+    });
+    const crumb = path.length ? path.join(" / ") : "This PC";
+    toolbar.innerHTML = `
+      <button class="winbtn" data-back ${path.length ? "" : `style="opacity:.3; pointer-events:none;"`}>‹ Back</button>
+      <span style="font-size:12px; color:var(--text-dim); flex:1;">${crumb}</span>
+      <button class="winbtn" data-newfolder style="width:auto; padding:0 10px; font-size:11.5px;">+ Folder</button>
+      <button class="winbtn" data-newtext style="width:auto; padding:0 10px; font-size:11.5px;">+ Text file</button>
+      <button class="winbtn" data-newapp style="width:auto; padding:0 10px; font-size:11.5px;">+ App</button>
+      <button class="winbtn" data-newweb style="width:auto; padding:0 10px; font-size:11.5px;">+ Web app</button>
+    `;
+    toolbar.querySelector("[data-back]").addEventListener("click", ()=>{ if(path.length) renderPath(path.slice(0,-1)); });
+    toolbar.querySelector("[data-newfolder]").addEventListener("click", async ()=>{
+      const name = await askName("New folder name", "New folder");
+      if(!name) return;
+      const children = getChildren(path);
+      if(children[name]){ toast('An item named "'+name+'" already exists'); return; }
+      children[name] = {type:"folder", children:{}};
+      renderPath(path); renderDesktopIcons(); scheduleSave();
+    });
+    toolbar.querySelector("[data-newtext]").addEventListener("click", async ()=>{
+      let name = await askName("New file name", "New Text Document.txt");
+      if(!name) return;
+      if(!/\.txt$/i.test(name)) name += ".txt";
+      const children = getChildren(path);
+      if(children[name]){ toast('An item named "'+name+'" already exists'); return; }
+      children[name] = {type:"text", content:""};
+      renderPath(path); renderDesktopIcons();
+      openFile([...path, name]);
+      scheduleSave();
+    });
+    toolbar.querySelector("[data-newapp]").addEventListener("click", async ()=>{
+      let name = await askName("New app name", "My App");
+      if(!name) return;
+      const children = getChildren(path);
+      if(children[name]){ toast('An item named "'+name+'" already exists'); return; }
+      children[name] = {type:"app", code: DEFAULT_APP_TEMPLATE};
+      renderPath(path); renderDesktopIcons();
+      openCodeEditor([...path, name]);
+      scheduleSave();
+    });
+    toolbar.querySelector("[data-newweb]").addEventListener("click", async ()=>{
+      await createWebAppIn(getChildren(path), ()=>{ renderPath(path); renderDesktopIcons(); });
+    });
+
+    main.innerHTML="";
+    const children = getChildren(path);
+    const names = Object.keys(children);
+    if(names.length===0){
+      main.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--text-dim); font-size:12.5px; padding:30px 0;">This folder is empty.</div>`;
+    }
+    names.forEach(name=>{
+      const node = children[name];
+      const itemPath = [...path, name];
+      const el=document.createElement("div");
+      el.className="fe-file";
+      el.innerHTML=`<div class="glyph">${iconForNode(node)}</div><div>${name}</div>`;
+      el.addEventListener("dblclick", ()=>{
+        if(node.type==="folder") renderPath(itemPath);
+        else openFile(itemPath);
+      });
+      el.addEventListener("contextmenu",(e)=>{
+        e.preventDefault(); e.stopPropagation();
+        showItemContextMenu(e, itemPath, ()=>renderPath(path));
+      });
+      main.appendChild(el);
+    });
+  }
+
+  const startPath = (payload && payload.path) ? payload.path : [];
+  renderPath(startPath);
+
+  return (newPayload)=>renderPath((newPayload && newPayload.path) ? newPayload.path : []);
+}
+
+function renderBin(body){
+  body.innerHTML = `<div class="app-pad" style="text-align:center; color:var(--text-dim); padding-top:60px;">
+    🗑️<br>Recycle Bin is empty.</div>`;
+}
+
+function renderSettings(body){
+  const pin = getPin();
+  const appNodes = flattenVFS().filter(it=>it.node.type==="app");
+  body.innerHTML = `
+    <div class="settings-wrap">
+      <div class="settings-section-title">Personalization</div>
+      <div class="settings-row">
+        <div>Dark mode</div>
+        <div class="toggle ${document.body.classList.contains('light')?'':'on'}" id="theme-toggle"></div>
+      </div>
+      <div class="settings-row">
+        <div>Accent color</div>
+        <div style="display:flex; gap:10px;" id="accent-swatches"></div>
+      </div>
+      <div class="settings-row">
+        <div>Desktop wallpaper motion</div>
+        <div class="toggle ${document.getElementById('wallpaper').style.animationPlayState!=='paused'?'on':''}" id="motion-toggle"></div>
+      </div>
+
+      <div class="settings-section-title">Security</div>
+      <div class="settings-row">
+        <div>Lock screen PIN</div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <span style="font-size:12px; color:var(--text-dim);">${pin ? "Enabled" : "Not set"}</span>
+          <button class="winbtn" id="pin-set" style="width:auto; padding:0 12px; font-size:11.5px;">${pin ? "Change" : "Set PIN"}</button>
+          ${pin ? `<button class="winbtn" id="pin-remove" style="width:auto; padding:0 12px; font-size:11.5px;">Remove</button>` : ``}
+        </div>
+      </div>
+
+      <div class="settings-section-title">Apps &amp; permissions</div>
+      <div id="app-permissions">
+        ${appNodes.length===0 ? `<div class="settings-row" style="color:var(--text-dim); font-size:12.5px;">No custom HTML apps yet — right-click the desktop → "New app…" to create one.</div>` : ""}
+      </div>
+
+      <div class="settings-section-title">System</div>
+      <div class="settings-row">
+        <div>Reset Windows</div>
+        <button class="winbtn" id="reset-os" style="width:auto; padding:0 12px; font-size:11.5px;">Reset all data</button>
+      </div>
+      <div class="settings-row">
+        <div>About this PC</div>
+        <div style="color:var(--text-dim); font-size:12px;">Windows 12 • Aurora Edition</div>
+      </div>
+    </div>`;
+
+  body.querySelector("#theme-toggle").addEventListener("click",(e)=>{
+    document.body.classList.toggle("light");
+    e.target.classList.toggle("on");
+    toast("Theme changed to "+(document.body.classList.contains("light")?"light":"dark"));
+    scheduleSave();
+  });
+  body.querySelector("#motion-toggle").addEventListener("click",(e)=>{
+    e.target.classList.toggle("on");
+    const wp = document.getElementById("wallpaper");
+    wp.style.animationPlayState = e.target.classList.contains("on") ? "running" : "paused";
+    scheduleSave();
+  });
+  const swatchColors = [
+    ["#7c5cff","#22d3c5"], ["#ff5aa0","#ffb35a"], ["#2ec4ff","#7c5cff"], ["#22c55e","#a3e635"]
+  ];
+  const currentAccent1 = document.documentElement.style.getPropertyValue("--accent-1");
+  const swWrap = body.querySelector("#accent-swatches");
+  swatchColors.forEach((pair,i)=>{
+    const sw=document.createElement("div");
+    const isActive = currentAccent1 ? currentAccent1.trim()===pair[0] : i===0;
+    sw.className="swatch"+(isActive?" active":"");
+    sw.style.background=`linear-gradient(135deg, ${pair[0]}, ${pair[1]})`;
+    sw.addEventListener("click", ()=>{
+      document.documentElement.style.setProperty("--accent-1", pair[0]);
+      document.documentElement.style.setProperty("--accent-2", pair[1]);
+      swWrap.querySelectorAll(".swatch").forEach(s=>s.classList.remove("active"));
+      sw.classList.add("active");
+      toast("Accent color updated");
+      scheduleSave();
+    });
+    swWrap.appendChild(sw);
+  });
+
+  // Security: PIN
+  body.querySelector("#pin-set").addEventListener("click", async ()=>{
+    const p1 = await askName(pin ? "Enter new PIN" : "Create a PIN", "");
+    if(!p1) return;
+    const p2 = await askName("Confirm PIN", "");
+    if(p2 !== p1){ toast("PINs didn't match — nothing was changed"); return; }
+    setPin(p1);
+    scheduleSave();
+    toast("PIN saved");
+    renderSettings(body);
+  });
+  const pinRemoveBtn = body.querySelector("#pin-remove");
+  if(pinRemoveBtn){
+    pinRemoveBtn.addEventListener("click", ()=>{
+      setPin(null);
+      scheduleSave();
+      toast("PIN removed");
+      renderSettings(body);
+    });
+  }
+
+  // Apps & permissions: allow/block JavaScript per custom app
+  const permWrap = body.querySelector("#app-permissions");
+  appNodes.forEach(it=>{
+    const row = document.createElement("div");
+    row.className="settings-row";
+    const jsOn = it.node.jsAllowed !== false;
+    row.innerHTML = `
+      <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+        <span>🧩</span>
+        <div style="overflow:hidden;">
+          <div style="font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${it.name}</div>
+          <div style="font-size:11px; color:var(--text-dim);">${it.path.slice(0,-1).join(" / ") || "This PC"}</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+        <span style="font-size:11px; color:var(--text-dim);">Allow JavaScript</span>
+        <div class="toggle ${jsOn?'on':''}" data-toggle></div>
+      </div>
+    `;
+    row.querySelector("[data-toggle]").addEventListener("click",(e)=>{
+      it.node.jsAllowed = !jsOn;
+      e.target.classList.toggle("on");
+      toast((it.node.jsAllowed ? "JavaScript allowed for " : "JavaScript blocked for ")+it.name);
+      scheduleSave();
+    });
+    permWrap.appendChild(row);
+  });
+
+  // System: reset
+  body.querySelector("#reset-os").addEventListener("click", async ()=>{
+    const confirmText = await askName('Type "reset" to erase all saved data', "");
+    if(!confirmText || confirmText.toLowerCase() !== "reset"){ toast("Reset cancelled"); return; }
+    Store.remove("w12:vfs");
+    Store.remove("w12:iconPositions");
+    Store.remove("w12:settings");
+    Store.remove("w12:pin");
+    location.reload();
+  });
+}
+
+function renderBrowser(body){
+  body.innerHTML = `
+    <div style="display:flex; flex-direction:column; height:100%;">
+      <div class="browser-bar">
+        <button class="winbtn" data-back title="Back">‹</button>
+        <button class="winbtn" data-fwd title="Forward">›</button>
+        <button class="winbtn" data-reload title="Reload">⟳</button>
+        <input id="browser-url" placeholder="Search or enter address">
+        <button class="winbtn" data-tab title="Open in new tab">↗</button>
+      </div>
+      <iframe id="browser-frame" style="flex:1; border:none; background:#fff;"></iframe>
+    </div>`;
+  const input = body.querySelector("#browser-url");
+  const frame = body.querySelector("#browser-frame");
+  const START_PAGE = "https://www.bing.com/";
+  let currentUrl = START_PAGE;
+
+  function looksLikeUrl(v){
+    if(/^https?:\/\//i.test(v)) return true;
+    return /^[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i.test(v) && !v.includes(" ");
+  }
+  function buildUrl(raw){
+    const value = raw.trim();
+    if(!value) return null;
+    if(looksLikeUrl(value)) return /^https?:\/\//i.test(value) ? value : "https://"+value;
+    return "https://www.bing.com/search?q="+encodeURIComponent(value);
+  }
+  function navigate(raw){
+    const url = buildUrl(raw);
+    if(!url) return;
+    currentUrl = url;
+    input.value = url;
+    frame.src = url;
+  }
+
+  input.value = START_PAGE;
+  frame.src = START_PAGE;
+
+  input.addEventListener("keydown",(e)=>{ if(e.key==="Enter") navigate(input.value); });
+  body.querySelector("[data-reload]").addEventListener("click", ()=>{ if(currentUrl) frame.src = currentUrl; });
+  body.querySelector("[data-back]").addEventListener("click", ()=>{ try{ frame.contentWindow.history.back(); }catch(e){} });
+  body.querySelector("[data-fwd]").addEventListener("click", ()=>{ try{ frame.contentWindow.history.forward(); }catch(e){} });
+  body.querySelector("[data-tab]").addEventListener("click", ()=>{
+    if(currentUrl) window.open(currentUrl, "_blank"); else toast("Enter an address or search term first");
+  });
+}
+
+function renderWidgets(body){
+  body.innerHTML = `
+    <div class="widget-card">
+      <div style="font-size:13px; color:var(--text-dim);">Weather</div>
+      <div style="font-size:34px; margin-top:6px;">🌤️ 18°C</div>
+      <div style="font-size:12px; color:var(--text-dim);">Partly cloudy</div>
+    </div>
+    <div class="widget-card">
+      <div style="font-size:13px; color:var(--text-dim);">To-do</div>
+      <div style="font-size:13px; margin-top:8px;">• Fix chat render bug in FadanClient<br>• Polish Fadan Launcher UI<br>• Update ItemShop pricing</div>
+    </div>`;
+}
+
+</script>
+</body>
+</html>
